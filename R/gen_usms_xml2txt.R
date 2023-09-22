@@ -30,6 +30,7 @@
 #' may be given
 #' @param java_converter logical TRUE for using JavaStics command
 #' (a JavaSTICS path must be set in the function inputs), FALSE otherwise
+#' @param usms_file Name of the usms file to use.
 #' @param javastics_path `r lifecycle::badge("deprecated")` `javastics_path`
 #' is no longer supported, use `javastics` instead.
 #' @param workspace_path `r lifecycle::badge("deprecated")` `workspace_path`
@@ -74,6 +75,7 @@ gen_usms_xml2txt <- function(javastics = NULL,
                              dir_per_usm_flag = TRUE,
                              java_cmd = "java",
                              java_converter = FALSE,
+                             usms_file = NULL,
                              javastics_path = lifecycle::deprecated(),
                              workspace_path = lifecycle::deprecated(),
                              target_path = lifecycle::deprecated(),
@@ -135,7 +137,9 @@ gen_usms_xml2txt <- function(javastics = NULL,
     setwd(javastics_path)
 
     # Checking and getting JavaSTICS workspace path
-    workspace_path <- check_java_workspace(javastics_path, workspace_path)
+    workspace_path <- check_java_workspace(javastics_path,
+                                           workspace_path,
+                                           usms_file = usms_file)
     if (base::is.null(workspace_path)) {
       return()
     }
@@ -150,7 +154,8 @@ gen_usms_xml2txt <- function(javastics = NULL,
     dir.create(target_path)
   }
 
-  usms_file_path <- file.path(workspace_path, "usms.xml")
+  if (is.null(usms_file)) usms_file_path <- file.path(workspace_path, "usms.xml")
+  else usms_file_path <- file.path(workspace_path, usms_file)
   usms_doc <- xmldocument(usms_file_path)
 
   # Retrieving usm names list from the usms.xml file
@@ -213,7 +218,8 @@ gen_usms_xml2txt <- function(javastics = NULL,
   all_files_list <- get_usms_files(
     workspace = workspace_path,
     javastics = javastics_path,
-    usms_list = usms_list
+    usms_list = usms_list,
+    usms_file = usms_file
   )
 
   # Checking XML files existence, check_files
