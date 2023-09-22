@@ -2,6 +2,7 @@
 #' switch parameters for lai forcing, parameters forcing and usm chaining.
 #'
 #' @param workspace Path of the directory containing the usm XML files
+#' @param usms_file Name of the usms file to use.
 #' @param usm Usm name
 #' @param lai_forcing 1, if `lai` is to be read from a daily lai, 0 otherwise
 #' input file.
@@ -20,6 +21,7 @@
 #'
 
 gen_new_travail <- function(workspace,
+                            usms_file = "usms.xml",
                             usm,
                             lai_forcing = NULL,
                             codesuite = NULL,
@@ -27,6 +29,7 @@ gen_new_travail <- function(workspace,
                             out_dir = NULL) {
 
   usm_data <- get_usm_data(workspace,
+                           usms_file = usms_file,
                            usm,
                            lai_forcing = lai_forcing,
                            codesuite = codesuite,
@@ -70,6 +73,7 @@ gen_new_travail <- function(workspace,
 #' some forcing options
 #'
 #' @param workspace Path of the directory containing the usm XML files
+#' @param usms_file Name of the usms file to use.
 #' @param usm Usm name
 #' @param lai_forcing 1, if `lai` is to be read from a daily lai, 0 otherwise
 #' input file.
@@ -87,6 +91,7 @@ gen_new_travail <- function(workspace,
 #'
 #'
 get_usm_data <- function(workspace,
+                         usms_file = "usms.xml",
                          usm,
                          lai_forcing = NULL,
                          codesuite = NULL,
@@ -95,10 +100,10 @@ get_usm_data <- function(workspace,
   data <- list()
 
 
-  data <- get_param_xml(file = file.path(workspace, "usms.xml"),
+  data <- get_param_xml(file = file.path(workspace, usms_file),
                         select = "usm",
                         select_value = usm,
-                        to_num = FALSE)$usms.xml
+                        to_num = FALSE)[[usms_file]]
 
   # forcing codesimul
   # 0: culture, 1: feuille, lai forcing

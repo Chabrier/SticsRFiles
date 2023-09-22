@@ -26,6 +26,7 @@
 #' @param java_cmd The java virtual machine command name or executable path
 #' @param java_converter logical TRUE for using JavaStics command,
 #'                       FALSE otherwise
+#' @param usms_file Name of the usms file to use.
 #' @param javastics_path `r lifecycle::badge("deprecated")` `javastics_path`
 #' is no longer supported, use `javastics` instead.
 #' @param workspace_path `r lifecycle::badge("deprecated")` `workspace_path`
@@ -70,6 +71,7 @@ gen_usms_xml2txt <- function(javastics,
                              dir_per_usm_flag = TRUE,
                              java_cmd = "java",
                              java_converter = FALSE,
+			                       usms_file = NULL,
                              javastics_path = lifecycle::deprecated(),
                              workspace_path = lifecycle::deprecated(),
                              target_path = lifecycle::deprecated(),
@@ -126,7 +128,9 @@ gen_usms_xml2txt <- function(javastics,
 
 
   # Checking and getting JavaSTICS workspace path
-  workspace_path <- check_java_workspace(javastics_path, workspace_path)
+  workspace_path <- check_java_workspace(javastics_path,
+                                         workspace_path,
+                                         usms_file = usms_file)
   if (base::is.null(workspace_path)) {
     return()
   }
@@ -141,7 +145,8 @@ gen_usms_xml2txt <- function(javastics,
     dir.create(target_path)
   }
 
-  usms_file_path <- file.path(workspace_path, "usms.xml")
+  if (is.null(usms_file)) usms_file_path <- file.path(workspace_path, "usms.xml")
+  else usms_file_path <- file.path(workspace_path, usms_file)
 
   # Retrieving usm names list from the usms.xml file
   full_usms_list <- get_usms_list(file = usms_file_path)
@@ -210,7 +215,8 @@ gen_usms_xml2txt <- function(javastics,
   all_files_list <- get_usms_files(
     workspace = workspace_path,
     javastics = javastics_path,
-    usms_list = usms_list
+    usms_list = usms_list,
+    usms_file = usms_file
   )
 
   # Checking XML files existence, check_files
@@ -379,7 +385,7 @@ gen_usms_xml2txt <- function(javastics,
         # for generating sol2txt.xsl file
         if (grepl(pattern = "sols", x = file_path)) {
           # generate sol2txt.xsl
-          ret <- gen_sol_xsl_file(workspace_path, usm_name, stics_version)
+          ret <- gen_sol_xsl_file(workspace_path, usms_file, usm_name, stics_version)
           if (!ret)
             warning("Problem when generating soil xsl file !")
         }
@@ -394,6 +400,7 @@ gen_usms_xml2txt <- function(javastics,
 
       # generating new_travail.usm
       gen_files_status[f + 1] <- gen_new_travail(workspace = workspace_path,
+                                                 usms_file = usms_file,
                                                  usm = usm_name,
                                                  out_dir = usm_path)
 

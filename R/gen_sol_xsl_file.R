@@ -2,6 +2,7 @@
 #'
 #' @param workspace Path of a JavaSTICS workspace
 #' (i.e. containing the STICS XML input files)
+#' #' @param usms_file Name of the usms file to use.
 #' @param usm an usm name
 #' @param stics_version the STICS files version to use
 #'
@@ -16,13 +17,15 @@
 #'
 #' @noRd
 #'
-gen_sol_xsl_file <- function(workspace, usm, stics_version = "latest") {
-
+gen_sol_xsl_file <- function(workspace,
+                             usms_file = "usms.xml",
+                             usm,
+                             stics_version = "latest") {
   # getting soil name
-  soil_name <- get_param_xml(file = file.path(workspace, "usms.xml"),
+  soil_name <- get_param_xml(file = file.path(workspace, usms_file),
                              param = "nomsol",
                              select = "usm",
-                             select_value = usm)$usms.xml$nomsol
+                             select_value = usm)[[usms_file]][["nomsol"]]
 
   xsl_dir <- get_examples_path("xsl", stics_version = stics_version)
 

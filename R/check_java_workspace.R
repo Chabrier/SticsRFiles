@@ -8,13 +8,16 @@
 #' @param javastics Path of JavaSTICS installation directory
 #' @param workspace An absolute or relative path (to JavaSTICS path)
 #' of a workspace (Optional)
+#' @param usms_file Name of the usms file to use.
 #'
 #' @return An absolute JavaSTICS workspace path
 #'
 #' @keywords internal
 #' @noRd
 
-check_java_workspace <- function(javastics, workspace = NULL) {
+check_java_workspace <- function(javastics,
+                                 workspace = NULL,
+                                 usms_file = "usms.xml") {
 
   # Ensure that the user working directory is unchanged after
   # the function has run
@@ -48,7 +51,7 @@ check_java_workspace <- function(javastics, workspace = NULL) {
   }
 
   # checking if it's a workspace directory: searching usms.xml
-  if (!file.exists(file.path(ws, "usms.xml"))) {
+  if (!file.exists(file.path(ws, usms_file))) {
     warning("This directory is not a JavaSTICS workspace: ", ws)
     return()
   }
