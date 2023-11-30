@@ -11,6 +11,9 @@
 #' (optional, default: fixed name for STICS)
 #' @param stics_version the STICS files version to use (optional,
 #' default to latest).
+#' @param redelac logical FALSE to convert files once only
+#' @param workspace Path of a JavaSTICS workspace
+#' (i.e. containing the STICS XML input files). Optional, if not provided
 #' @param xml_file `r lifecycle::badge("deprecated")` `xml_file` is no
 #'   longer supported, use `file` instead.
 #' @param out_file `r lifecycle::badge("deprecated")` `out_file` is no
@@ -35,10 +38,11 @@ convert_xml2txt <- function(file,
                             out_dir = NULL,
                             save_as = NULL,
                             stics_version = "latest",
+                            workspace = NULL,
+                            redelac = FALSE,
                             xml_file = lifecycle::deprecated(),
                             plt_num = lifecycle::deprecated(),
                             out_file = lifecycle::deprecated()) {
-
   if (lifecycle::is_present(xml_file)) {
     lifecycle::deprecate_warn("1.0.0",
                               "convert_xml2txt(xml_file)",
@@ -64,24 +68,46 @@ convert_xml2txt <- function(file,
 
   # Defining which xsl file to use according to the input xml file
   xsl_files <- c(
-    "ini2txt.xsl", "sol2txt.xsl", "xml2txt.xsl", "xml2txt.xsl",
-    "xml2txt.xsl", "xml2txt.xsl", "xml2txt.xsl"
+    "ini2txt.xsl",
+    "sol2txt.xsl",
+    "xml2txt.xsl",
+    "xml2txt.xsl",
+    "xml2txt.xsl",
+    "xml2txt.xsl",
+    "xml2txt.xsl"
   )
   names(xsl_files) <- c(
-    "initialisations", "sols", "fichierplt", "fichiertec",
-    "fichiersta", "fichierparamgen", "fichierpar"
+    "initialisations",
+    "sols",
+    "fichierplt",
+    "fichiertec",
+    "fichiersta",
+    "fichierparamgen",
+    "fichierpar"
   )
   # output text file names
   files_names <- list(
-    "ficini.txt", "param.sol", list("ficplt1.txt", "ficplt2.txt"),
-    list("fictec1.txt", "fictec2.txt"), "station.txt", "tempoparv6.sti",
+    "ficini.txt",
+    "param.sol",
+    list("ficplt1.txt", "ficplt2.txt"),
+    list("fictec1.txt", "fictec2.txt"),
+    "station.txt",
+    "tempoparv6.sti",
     "tempopar.sti"
   )
 
   # Using tags from in files names for the xml file type identification
-  tags <- list("_ini\\.xml", "sols\\.xml", "_plt\\.xml",
-               "_tec\\.xml", "_sta\\.xml", "_newform\\.xml", "_gen\\.xml")
-  idx <- which(unlist(lapply(tags, function(x) grepl(x, xml_file))))
+  tags <- list(
+    "_ini\\.xml",
+    "sols\\.xml",
+    "_plt\\.xml",
+    "_tec\\.xml",
+    "_sta\\.xml",
+    "_newform\\.xml",
+    "_gen\\.xml"
+  )
+  idx <- which(unlist(lapply(tags, function(x)
+    grepl(x, xml_file))))
   calc_name <- length(idx) > 0
 
   # Not possible to define output file name
@@ -118,9 +144,17 @@ convert_xml2txt <- function(file,
 
   style_file <- file.path(xsl_dir, xsl_files[filet])
 
-  # calling the xml conversion function
-  status <- convert_xml2txt_int(xml_file, style_file, out_file_path)
-
+  if (redelac) {
+    status <-  file.copy(file.path(workspace,
+                                   paste0(
+                                     tools::file_path_sans_ext(basename(xml_file)),
+                                     ".txt"
+                                   )),
+                         out_file_path)
+  } else {
+    # calling the xml conversion function
+    status <-
+      convert_xml2txt_int(xml_file, style_file, out_file_path)
+  }
   return(status)
 }
-
