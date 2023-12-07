@@ -32,6 +32,8 @@
 #' (a JavaSTICS path must be set in the function inputs), FALSE otherwise
 #' @param usms_file Name of the usms file to use.
 #' @param redelac logical FALSE to convert files once only
+#' @param parallel logical FALSE enable to parallelize if a Dofuture cluster
+#' is provided
 #' @param javastics_path `r lifecycle::badge("deprecated")` `javastics_path`
 #' is no longer supported, use `javastics` instead.
 #' @param workspace_path `r lifecycle::badge("deprecated")` `workspace_path`
@@ -67,6 +69,8 @@
 #'
 #'
 
+library("foreach")
+
 gen_usms_xml2txt <- function(javastics = NULL,
                              workspace = NULL,
                              out_dir = NULL,
@@ -78,6 +82,7 @@ gen_usms_xml2txt <- function(javastics = NULL,
                              java_converter = FALSE,
                              usms_file = NULL,
                              redelac = FALSE,
+                             parallel = FALSE,
                              javastics_path = lifecycle::deprecated(),
                              workspace_path = lifecycle::deprecated(),
                              target_path = lifecycle::deprecated(),
@@ -124,6 +129,12 @@ gen_usms_xml2txt <- function(javastics = NULL,
                               "gen_usms_xml2txt(usm)")
   } else {
     usms_list <- usm # to remove when we update inside the function
+  }
+
+  if (parallel) {
+    `%dordopar%` <- `%dofuture%`
+  } else {
+    `%dordopar%` <- `%do%`
   }
 
   if (java_converter) {
@@ -352,18 +363,23 @@ gen_usms_xml2txt <- function(javastics = NULL,
                                 all_file_list_single,
                                 invert = TRUE)]
 
-    for (f in all_file_list_single) {
+    foreach (fi = 1:length(all_file_list_single),
+             .options.future = list(future.rng.onMisuse = "ignore",
+                                    seed = TRUE)) %dordopar% {
+      f = all_file_list_single[[fi]]
       convert_xml2txt(
         file = f,
         out_dir = workspace,
         save_as = paste0(tools::file_path_sans_ext(basename(f)), ".txt")
       )
     }
-
   }
 
-  for (i in 1:usms_number) {
+  res <- foreach (i = 1:usms_number,
+           .options.future = list(future.rng.onMisuse = "ignore",
+                                  seed = TRUE)) %dordopar% {
     usm_name <- usms_list[i]
+    usms_doc <- xmldocument(usms_file_path)
 
     # Removing all previous generated files, to be sure.
     file.remove(files_path[file.exists(files_path)])
@@ -402,7 +418,6 @@ gen_usms_xml2txt <- function(javastics = NULL,
           overwrite = TRUE
         ))
       }
-
     } else {
       usm_data <- get_usm_data(usms_doc, usm_name, workspace_path)
 
@@ -421,6 +436,7 @@ gen_usms_xml2txt <- function(javastics = NULL,
       plant_id_plt <- 0
       plant_id_tec <- 0
       plant_id <- 0
+
       for (f in seq_along(xml_files_path)) {
         file_path <- xml_files_path[f]
 
@@ -478,9 +494,9 @@ gen_usms_xml2txt <- function(javastics = NULL,
                                              out_dir = usm_path)
 
       # setting exec status result
-      exec_status[i] <- all(gen_files_status)
+      exec_status <- all(gen_files_status)
 
-      copy_status <- exec_status[i]
+      copy_status <- exec_status
     }
 
     # Copying default files for outputs definition
@@ -501,14 +517,15 @@ gen_usms_xml2txt <- function(javastics = NULL,
     # If only one usm, for exiting the loop if target_path
     # is the workspace path, no need to copy files
     if (!dir_per_usm_flag && target_path == workspace_path) {
-      global_copy_status[i] <- TRUE
+      global_copy_status <- TRUE
       next
     }
 
     # Copying observation files
     obs_path <- file.path(workspace_path, paste0(usm_name, ".obs"))
+    obs_copy_status <- FALSE
     if (file.exists(obs_path)) {
-      obs_copy_status[i] <- file.copy(from = obs_path,
+      obs_copy_status <- file.copy(from = obs_path,
                                       to = usm_path,
                                       overwrite = TRUE)
     } else {
@@ -520,11 +537,13 @@ gen_usms_xml2txt <- function(javastics = NULL,
         ))
     }
 
+
+    lai_copy_status <- FALSE
     # Copying lai files if lai forcing
     if (lai_forcing[usm_name]) {
       lapply(flai_usms[usm_name], function(x) {
         if (file.exists(x)) {
-          lai_copy_status[i] <- file.copy(from = x,
+          lai_copy_status <- file.copy(from = x,
                                           to = usm_path,
                                           overwrite = TRUE)
         } else {
@@ -533,22 +552,33 @@ gen_usms_xml2txt <- function(javastics = NULL,
               paste0(
                 "LAI file not found for USM ",
                 "{.val {usm_name}}: {.file ",
-                "{lai_file_path[i]}}"
+                "{lai_file_path}}"
               )
             )
         }
       })
     }
     # Storing global files copy status
-    global_copy_status[i] <- copy_status & out_copy_status
+    global_copy_status <- copy_status & out_copy_status
 
     # displaying usm name
     if (verbose)
       cli::cli_alert_info("USM {.val {usm_name}} successfully created")
 
     # Storing the current usm target path
-    usms_path[i] <- usm_path
+    usms_path <- usm_path
+    return(list(global_copy_status=global_copy_status,
+                exec_status = exec_status,
+                obs_copy_status = obs_copy_status,
+                lai_copy_status = lai_copy_status,
+                usms_path = usms_path))
   }
+
+  global_copy_status <- unlist(lapply(res, function(x) x$global_copy_status))
+  exec_status <- unlist(lapply(res, function(x) x$exec_status))
+  obs_copy_status <- unlist(lapply(res, function(x) x$obs_copy_status))
+  lai_copy_status <- unlist(lapply(res, function(x) x$lai_copy_status))
+  usms_path <- lapply(res, function(x) x$usms_path)
 
   # Messages if failing copies
   if (!all(global_copy_status)) {
@@ -561,8 +591,6 @@ gen_usms_xml2txt <- function(javastics = NULL,
       )
     )
   }
-
-
 
   # Message about execution errors
   if (!all(exec_status)) {
