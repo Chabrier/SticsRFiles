@@ -240,7 +240,8 @@ gen_usms_xml2txt <- function(javastics = NULL,
     workspace = workspace_path,
     javastics = javastics_path,
     usms_list = usms_list,
-    usms_file = usms_file
+    usms_file = usms_file,
+    redelac = redelac
   )
 
   # Checking XML files existence, check_files
@@ -363,9 +364,11 @@ gen_usms_xml2txt <- function(javastics = NULL,
                                 all_file_list_single,
                                 invert = TRUE)]
 
-    foreach (fi = 1:length(all_file_list_single),
-             .options.future = list(future.rng.onMisuse = "ignore",
-                                    seed = TRUE)) %dordopar% {
+    foreach (
+      fi = 1:length(all_file_list_single),
+      .options.future = list(future.rng.onMisuse = "ignore",
+                             seed = TRUE)
+    ) %dordopar% {
       f = all_file_list_single[[fi]]
       convert_xml2txt(
         file = f,
@@ -375,9 +378,11 @@ gen_usms_xml2txt <- function(javastics = NULL,
     }
   }
 
-  res <- foreach (i = 1:usms_number,
-           .options.future = list(future.rng.onMisuse = "ignore",
-                                  seed = TRUE)) %dordopar% {
+  res <- foreach (
+    i = 1:usms_number,
+    .options.future = list(future.rng.onMisuse = "ignore",
+                           seed = TRUE)
+  ) %dordopar% {
     usm_name <- usms_list[i]
     usms_doc <- xmldocument(usms_file_path)
 
@@ -526,8 +531,8 @@ gen_usms_xml2txt <- function(javastics = NULL,
     obs_copy_status <- FALSE
     if (file.exists(obs_path)) {
       obs_copy_status <- file.copy(from = obs_path,
-                                      to = usm_path,
-                                      overwrite = TRUE)
+                                   to = usm_path,
+                                   overwrite = TRUE)
     } else {
       if (verbose)
         cli::cli_alert_warning(paste0(
@@ -544,8 +549,8 @@ gen_usms_xml2txt <- function(javastics = NULL,
       lapply(flai_usms[usm_name], function(x) {
         if (file.exists(x)) {
           lai_copy_status <- file.copy(from = x,
-                                          to = usm_path,
-                                          overwrite = TRUE)
+                                       to = usm_path,
+                                       overwrite = TRUE)
         } else {
           if (verbose)
             cli::cli_alert_warning(
@@ -567,18 +572,30 @@ gen_usms_xml2txt <- function(javastics = NULL,
 
     # Storing the current usm target path
     usms_path <- usm_path
-    return(list(global_copy_status=global_copy_status,
-                exec_status = exec_status,
-                obs_copy_status = obs_copy_status,
-                lai_copy_status = lai_copy_status,
-                usms_path = usms_path))
+    return(
+      list(
+        global_copy_status = global_copy_status,
+        exec_status = exec_status,
+        obs_copy_status = obs_copy_status,
+        lai_copy_status = lai_copy_status,
+        usms_path = usms_path
+      )
+    )
   }
 
-  global_copy_status <- unlist(lapply(res, function(x) x$global_copy_status))
-  exec_status <- unlist(lapply(res, function(x) x$exec_status))
-  obs_copy_status <- unlist(lapply(res, function(x) x$obs_copy_status))
-  lai_copy_status <- unlist(lapply(res, function(x) x$lai_copy_status))
-  usms_path <- lapply(res, function(x) x$usms_path)
+  global_copy_status <-
+    unlist(lapply(res, function(x)
+      x$global_copy_status))
+  exec_status <- unlist(lapply(res, function(x)
+    x$exec_status))
+  obs_copy_status <-
+    unlist(lapply(res, function(x)
+      x$obs_copy_status))
+  lai_copy_status <-
+    unlist(lapply(res, function(x)
+      x$lai_copy_status))
+  usms_path <- lapply(res, function(x)
+    x$usms_path)
 
   # Messages if failing copies
   if (!all(global_copy_status)) {
