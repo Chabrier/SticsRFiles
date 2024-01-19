@@ -169,7 +169,7 @@ get_usms_files <- function(workspace,
   usms_files_list <- vector("list", usms_nb)
 
   # avoiding xml
-  if (redelac && (is.null(usms_list)) {
+  if (redelac && (is.null(usms_list))) {
     usms_txt = readLines(usms_xml_path)
     usms_txt_list_only <- head(tail(usms_txt,-2),-2)
     usms_nb <- length(usms_txt_list_only) / 24
@@ -177,7 +177,7 @@ get_usms_files <- function(workspace,
 
   # Loop over usms names
   for (i in 1:usms_nb) {
-    if (redelac && (is.null(usms_list)) {
+    if (redelac && (is.null(usms_list))) {
       firstLine <- usms_txt_list_only[1 + ((i - 1) * 24)]
 
       usm_name <-
