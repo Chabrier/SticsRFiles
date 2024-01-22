@@ -1,6 +1,7 @@
 #' Generating the soil xsl stylesheet for a soil name
 #'
 #' @param soil_name an usm soil name
+#' @param parallel
 #' @param stics_version the STICS files version to use
 #'
 #' @return conversion success status (TRUE/FALSE)
@@ -14,11 +15,13 @@
 #'
 #' @noRd
 #'
-gen_sol_xsl_file <- function(soil_name, stics_version = "latest") {
-
+gen_sol_xsl_file <- function(soil_name,
+                             parallel = FALSE,
+                             stics_version = "latest") {
   xsl_dir <- get_examples_path("xsl", stics_version = stics_version)
 
   sol_xsl <- file.path(xsl_dir, "sol2txt.xsl")
+
   sol_xsl_tmpl <- file.path(xsl_dir, "sol2txt.xsl.tmpl")
 
   if (!file.exists(sol_xsl_tmpl)) {
@@ -34,6 +37,11 @@ gen_sol_xsl_file <- function(soil_name, stics_version = "latest") {
   file_lines[idx] <- gsub(pattern = "\\?",
                           x = file_lines[idx],
                           replacement = soil_name)
+
+
+  if (parallel)
+    sol_xsl <-
+    file.path(xsl_dir, paste0("sol2txt.", soil_name, ".xsl"))
 
   ret <- try(writeLines(text = file_lines, con = sol_xsl))
 

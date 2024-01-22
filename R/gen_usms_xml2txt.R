@@ -339,16 +339,24 @@ gen_usms_xml2txt <- function(javastics = NULL,
       unique(get_param_xml(usms_file_path, "nomsol")[[1]]$nomsol)
 
     for (s in soils) {
-      ret <- gen_sol_xsl_file(s, stics_version)
+      ret <- gen_sol_xsl_file(s, parallel, stics_version)
 
       if (!ret)
         warning("Problem when generating soil xsl file !")
 
-      convert_xml2txt(
-        file = file.path(workspace, "sols.xml"),
-        out_dir = workspace,
-        save_as = paste0(s, "_sol.txt")
-      )
+      if (parallel) {
+        xsl_dir <- get_examples_path("xsl", stics_version = stics_version)
+        convert_xml2txt_int(
+          file.path(workspace, "sols.xml"),
+          file.path(xsl_dir, paste0("sol2txt.", s, ".xsl")),
+          file.path(workspace, paste0(s, "_sol.txt"))
+        )
+      } else
+        convert_xml2txt(
+          file = file.path(workspace, "sols.xml"),
+          out_dir = workspace,
+          save_as = paste0(s, "_sol.txt")
+        )
     }
 
     all_file_list_single <-
