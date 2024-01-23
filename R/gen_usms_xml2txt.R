@@ -364,6 +364,26 @@ gen_usms_xml2txt <- function(javastics = NULL,
         x$paths
       })))
 
+    clim_file_list_single <-
+      unique(lapply(all_files_list, function(x) {
+        x$paths[grep(pattern = "\\.xml$", x$paths, invert = TRUE)]
+      }))
+
+    lapply(clim_file_list_single, function(x) {
+      clim_cache_name <- file.path(workspace,
+                                   paste0(basename(x[1]),
+                                          "%+%",
+                                          basename(x[2]),
+                                          ".txt"))
+      # data concatenation
+      climate_lines <- c()
+      for (i in seq_along(x)) {
+        climate_lines <- c(climate_lines, trimws(readLines(x[i])))
+      }
+      ret <- try(writeLines(text = climate_lines,
+                            con = clim_cache_name))
+    })
+
     all_file_list_single <-
       all_file_list_single[grep(pattern = "\\.xml$", all_file_list_single)]
 
@@ -504,7 +524,8 @@ gen_usms_xml2txt <- function(javastics = NULL,
 
       # generating climat.txt file
       gen_files_status[f + 2] <- gen_climate(clim_files_path,
-                                             out_dir = usm_path)
+                                             out_dir = usm_path,
+                                             redelac)
 
       # setting exec status result
       exec_status <- all(gen_files_status)
