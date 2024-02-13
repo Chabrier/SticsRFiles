@@ -19,15 +19,20 @@
 #'
 #' @noRd
 #'
-gen_climate <- function(files_path, out_dir, redelac = FALSE) {
+gen_climate <- function(files_path, out_dir, redelac = FALSE, symlink = FALSE) {
   if (redelac) {
     clim_cache_name <- paste0(basename(files_path[1]),
                               "%+%",
                               basename(files_path[2]),
                               ".txt")
-
-    ret <- try(file.symlink(file.path("../..", clim_cache_name),
+    if (symlink)		      
+       ret <- try(file.symlink(file.path("../..", clim_cache_name),
+                               file.path(out_dir, "climat.txt")))
+    else
+       ret <- try(file.copy(file.path("../..", clim_cache_name),
                             file.path(out_dir, "climat.txt")))
+
+    
   } else {
     # generate intermediate paths for a multi-years simulation
     # i.e. greater than 2

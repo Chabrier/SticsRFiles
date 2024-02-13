@@ -32,6 +32,8 @@
 #' (a JavaSTICS path must be set in the function inputs), FALSE otherwise
 #' @param usms_file Name of the usms file to use.
 #' @param redelac logical FALSE to convert files once only
+#' @param symlinl logical FALSE to use symlinks instead of copying files,
+#' redelac compliant only
 #' @param parallel logical FALSE enable to parallelize if a Dofuture cluster
 #' is provided
 #' @param javastics_path `r lifecycle::badge("deprecated")` `javastics_path`
@@ -82,6 +84,7 @@ gen_usms_xml2txt <- function(javastics = NULL,
                              java_converter = FALSE,
                              usms_file = NULL,
                              redelac = FALSE,
+			     symlink = FALSE,
                              parallel = FALSE,
                              javastics_path = lifecycle::deprecated(),
                              workspace_path = lifecycle::deprecated(),
@@ -525,7 +528,7 @@ gen_usms_xml2txt <- function(javastics = NULL,
       # generating climat.txt file
       gen_files_status[f + 2] <- gen_climate(clim_files_path,
                                              out_dir = usm_path,
-                                             redelac)
+                                             symlink)
 
       # setting exec status result
       exec_status <- all(gen_files_status)
