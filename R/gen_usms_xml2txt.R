@@ -342,24 +342,26 @@ gen_usms_xml2txt <- function(javastics = NULL,
       unique(get_param_xml(usms_file_path, "nomsol")[[1]]$nomsol)
 
     for (s in soils) {
-      ret <- gen_sol_xsl_file(s, parallel, stics_version)
+      if (!file.exist(file.path(workspace, paste0(s, "_sol.txt")))) {
+        ret <- gen_sol_xsl_file(s, parallel, stics_version)
 
-      if (!ret)
-        warning("Problem when generating soil xsl file !")
+        if (!ret)
+          warning("Problem when generating soil xsl file !")
 
-      if (parallel) {
-        xsl_dir <- get_examples_path("xsl", stics_version = stics_version)
-        convert_xml2txt_int(
-          file.path(workspace, "sols.xml"),
-          file.path(xsl_dir, paste0("sol2txt.", s, ".xsl")),
-          file.path(workspace, paste0(s, "_sol.txt"))
-        )
-      } else
+        if (parallel) {
+          xsl_dir <- get_examples_path("xsl", stics_version = stics_version)
+          convert_xml2txt_int(
+            file.path(workspace, "sols.xml"),
+            file.path(xsl_dir, paste0("sol2txt.", s, ".xsl")),
+            file.path(workspace, paste0(s, "_sol.txt"))
+          )
+        } else
         convert_xml2txt(
           file = file.path(workspace, "sols.xml"),
           out_dir = workspace,
           save_as = paste0(s, "_sol.txt")
         )
+      }
     }
 
     all_file_list_single <-
@@ -378,13 +380,15 @@ gen_usms_xml2txt <- function(javastics = NULL,
                                           "%+%",
                                           basename(x[2]),
                                           ".txt"))
-      # data concatenation
-      climate_lines <- c()
-      for (i in seq_along(x)) {
-        climate_lines <- c(climate_lines, trimws(readLines(x[i])))
-      }
-      ret <- try(writeLines(text = climate_lines,
-                            con = clim_cache_name))
+      if (!file.exist(clim_cache_name)) {					  
+        # data concatenation
+        climate_lines <- c()
+        for (i in seq_along(x)) {
+          climate_lines <- c(climate_lines, trimws(readLines(x[i])))
+        }
+        ret <- try(writeLines(text = climate_lines,
+                              con = clim_cache_name))
+      }	      
     })
 
     all_file_list_single <-
@@ -401,10 +405,12 @@ gen_usms_xml2txt <- function(javastics = NULL,
                              seed = TRUE)
     ) %dordopar% {
       f = all_file_list_single[[fi]]
-      convert_xml2txt(
-        file = f,
-        out_dir = workspace,
-        save_as = paste0(tools::file_path_sans_ext(basename(f)), ".txt")
+      fc =  paste0(tools::file_path_sans_ext(basename(f)), ".txt")
+      if (!file.exist(file.path(workspace, fc))
+        convert_xml2txt(
+          file = f,
+          out_dir = workspace,
+          save_as = fc
       )
     }
   }
