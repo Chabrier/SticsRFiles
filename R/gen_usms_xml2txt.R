@@ -357,7 +357,7 @@ gen_usms_xml2txt <- function(javastics = NULL,
           )
         } else
         convert_xml2txt(
-          file = file.path(workspace, "sols.xml",)
+          file = file.path(workspace, "sols.xml"),
           out_dir = workspace,
           save_as = paste0(s, "_sol.txt")
         )
