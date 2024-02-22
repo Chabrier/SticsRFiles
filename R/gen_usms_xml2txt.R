@@ -357,7 +357,7 @@ gen_usms_xml2txt <- function(javastics = NULL,
           )
         } else
         convert_xml2txt(
-          file = file.path(workspace, "sols.xml"),
+          file = file.path(workspace, "sols.xml",)
           out_dir = workspace,
           save_as = paste0(s, "_sol.txt")
         )
@@ -406,7 +406,7 @@ gen_usms_xml2txt <- function(javastics = NULL,
     ) %dordopar% {
       f = all_file_list_single[[fi]]
       fc =  paste0(tools::file_path_sans_ext(basename(f)), ".txt")
-      if (!file.exist(file.path(workspace, fc))
+      if (!file.exist(file.path(workspace, fc)))
         convert_xml2txt(
           file = f,
           out_dir = workspace,
