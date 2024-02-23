@@ -342,7 +342,7 @@ gen_usms_xml2txt <- function(javastics = NULL,
       unique(get_param_xml(usms_file_path, "nomsol")[[1]]$nomsol)
 
     for (s in soils) {
-      if (!file.exist(file.path(workspace, paste0(s, "_sol.txt")))) {
+      if (!file.exists(file.path(workspace, paste0(s, "_sol.txt")))) {
         ret <- gen_sol_xsl_file(s, parallel, stics_version)
 
         if (!ret)
@@ -380,7 +380,7 @@ gen_usms_xml2txt <- function(javastics = NULL,
                                           "%+%",
                                           basename(x[2]),
                                           ".txt"))
-      if (!file.exist(clim_cache_name)) {					  
+      if (!file.exists(clim_cache_name)) {					  
         # data concatenation
         climate_lines <- c()
         for (i in seq_along(x)) {
@@ -406,7 +406,7 @@ gen_usms_xml2txt <- function(javastics = NULL,
     ) %dordopar% {
       f = all_file_list_single[[fi]]
       fc =  paste0(tools::file_path_sans_ext(basename(f)), ".txt")
-      if (!file.exist(file.path(workspace, fc)))
+      if (!file.exists(file.path(workspace, fc)))
         convert_xml2txt(
           file = f,
           out_dir = workspace,
